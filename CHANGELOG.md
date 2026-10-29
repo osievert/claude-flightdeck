@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- A very long shell command no longer stalls the session while Flightdeck masks its credentials: only the start the pane can show is scanned.
+
 ## 0.5.1
 
 - The main box's `last req` line shows only the time to first token. Its tokens per second divided the reported output tokens, which include thinking, by the time from the first streamed piece, so when thinking wasn't streamed it read thousands of tokens a second. It is gone rather than wrong. ([#19](https://github.com/scasella/claude-flightdeck/pull/19))

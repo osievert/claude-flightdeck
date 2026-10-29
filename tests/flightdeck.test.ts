@@ -21,6 +21,7 @@ import {
   compactWindowOf,
   consultTimeline,
   contextFill,
+  DESCRIBE_MAX,
   describeInput,
   endConsult,
   fitLegend,
@@ -62,6 +63,21 @@ test('redaction masks credentials before anything is stored', () => {
   expect(redact('password=hunter2 ls')).not.toContain('hunter2')
   expect(redact('ls -la src/')).toBe('ls -la src/')
   expect(describeInput('Read', { file_path: 'C:\\Users\\me\\proj\\src\\main.ts' })).toBe('Read → src/main.ts')
+})
+
+test('redaction stays fast on long input and masks only credentials', () => {
+  const fast = (s: string) => {
+    const t = performance.now()
+    redact(s)
+    expect(performance.now() - t).toBeLessThan(200)
+  }
+  fast('a.'.repeat(100_000))
+  fast('a://b:'.repeat(33_333))
+  fast('a://' + 'b'.repeat(200_000))
+  expect(describeInput('Bash', { command: `${' '.repeat(10_000)}ghp_abcdefghijklmnop` })).not.toContain('abcdefghij')
+  expect(describeInput('Bash', { command: 'x'.repeat(10_000) }).length).toBeLessThanOrEqual(DESCRIBE_MAX + 'Bash → '.length)
+  expect(redact('psql postgres://bob:hunter2@db/x')).toBe('psql postgres://bob:•••@db/x')
+  for (const s of ['https://host:8080/path@x', 'git clone https://github.com/org/repo']) expect(redact(s)).toBe(s)
 })
 
 const check = (id: string, verdict: Check['verdict'], bucket: Check['bucket'] = 'shell'): Check => ({

@@ -332,7 +332,7 @@ const SECRETS: [RegExp, string][] = [
   [/((?:api[_-]?key|access[_-]?token|token|secret|password|passwd|pwd)\s*[=:]\s*)("[^"]*"|'[^']*'|\S+)/gi, '$1•••'],
   [/(--(?:token|password|api-key|secret)[= ])\S+/gi, '$1•••'],
   [/(\b[A-Z][A-Z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD)=)\S+/g, '$1•••'],
-  [/(\b[a-z][a-z0-9+.-]*:\/\/[^\s/:@]+:)[^\s@]+@/gi, '$1•••@'],
+  [/((?<![\w+.-])[a-z][a-z0-9+.-]*:\/\/[^\s/:@]+:)[^\s@/]{1,256}@/gi, '$1•••@'],
 ]
 
 /** What the gate drill-down may store: credentials masked before anything is written to state. */
@@ -347,14 +347,24 @@ export const EDIT_TOOLS = new Set(['Edit', 'Write', 'NotebookEdit'])
 export const bucketOf = (tool: string): Bucket =>
   FILE_TOOLS.has(tool) ? 'file' : SHELL_TOOLS.has(tool) ? 'shell' : 'other'
 
+/**
+ * Longest input `describeInput` redacts. The result may end in a secret cut at the cap, so
+ * callers must shorten it below the cap before storing or showing it.
+ */
+export const DESCRIBE_MAX = 256
+
 /** One line saying what a call was about: its command, path or pattern; redacted. */
 export const describeInput = (tool: string, input: unknown) => {
   const i = isObject(input) ? input : {}
   const path = typeof i.file_path === 'string' ? i.file_path.split(/[\\/]/).slice(-2).join('/') : ''
-  const what =
+  // Collapse whitespace before cutting: a cut first could leave a partial secret in the shown text.
+  const what = (
     typeof i.command === 'string'
       ? i.command
       : path || (typeof i.pattern === 'string' ? i.pattern : typeof i.url === 'string' ? i.url : typeof i.description === 'string' ? i.description : '')
+  )
+    .replace(/\s+/g, ' ')
+    .slice(0, DESCRIBE_MAX)
   return redact(what ? `${tool} → ${what}` : tool)
 }
 
