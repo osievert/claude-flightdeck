@@ -287,6 +287,12 @@ export const register: Register = (on, options) => {
       await $.ui.close({ id: PANE })
       return { text: 'Flightdeck closed.' }
     }
+    if (verb === 'toggle') {
+      if ((await $.ui.panes()).some(p => p.id === PANE)) {
+        await $.ui.close({ id: PANE })
+        return { text: 'Flightdeck closed.' }
+      }
+    }
     if (verb === 'reset') {
       await resetAll($)
       await refreshStatus($, cfg)

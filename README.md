@@ -77,6 +77,7 @@ Connectors animate only while work flows: a turn is running, an agent is running
 | --- | --- |
 | `/flightdeck` | open the pane |
 | `/flightdeck close` | close it |
+| `/flightdeck toggle` | close the pane if it is open, open it otherwise |
 | `/flightdeck reset` | clear agents, checks, consults, log and the turn (cost, rate limits and compactions stay) |
 | `/flightdeck layout auto\|compact\|wide\|mini` | override the layout for this session |
 
@@ -88,6 +89,16 @@ Focus the pane with `ctrl+x tab`, then:
 | `f` `s` `o` | open the gate's file / shell / other drill-down: the last 5 checks and their verdicts |
 
 `/clear` resets the pane along with the conversation.
+
+To hide and show the pane with one key, bind `/flightdeck toggle` in `~/.claude/keybindings.json`. `ctrl+f` is unbound in the prompt by default, and unlike `ctrl+o` (Claude Code's detailed transcript) it takes nothing over:
+
+```json
+{
+  "bindings": [
+    { "context": "Chat", "bindings": { "ctrl+f": "command:flightdeck toggle" } }
+  ]
+}
+```
 
 ## Where it runs
 
