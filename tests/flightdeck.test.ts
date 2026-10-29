@@ -80,6 +80,76 @@ test('redaction stays fast on long input and masks only credentials', () => {
   for (const s of ['https://host:8080/path@x', 'git clone https://github.com/org/repo']) expect(redact(s)).toBe(s)
 })
 
+test('redaction masks more credential formats and leaves ordinary commands alone', () => {
+  const masked: [string, string][] = [
+    ['git clone https://oauth2:glpat-abcdefghij1234567890@gitlab.com/x', 'glpat-abcdefghij'],
+    ['gh auth --token ghu_abcdefghijklmnop', 'abcdefghijklmnop'],
+    ['NPM=npm_abcdefghijklmnopqrstuvwxyz0123456789 npm publish', 'npm_abcdef'],
+    ['aws s3 ls # AKIAIOSFODNN7EXAMPLE', 'AKIAIOSFODNN7'],
+    ['aws_secret_access_key=wJalrXUtnFEMI/K7MDENG/bPxRfiCY', 'wJalrXUtnFEMI'],
+    ['aws configure set aws_secret_access_key wJalrXUtnFEMI/K7MDENG', 'wJalrXUtnFEMI'],
+    ['AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG', 'wJalrXUtnFEMI'],
+    ['curl "https://x/?k=AIzaSyA1234567890abcdefghijklmnopqrstu"', 'AIzaSyA1234567890'],
+    ['https://s/o?X-Amz-Signature=abc123def456&X-Amz-Date=1', 'abc123def456'],
+    ['https://s/o?sig=abc123def456', 'abc123def456'],
+    ['echo eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dBjftJeZ4CVP', 'eyJzdWIi'],
+    ["curl -H 'Cookie: sid=abc123; theme=dark' x", 'abc123'],
+    ['curl -u bob:hunter2 https://x', 'hunter2'],
+    ['curl --user bob:hunter2 https://x', 'hunter2'],
+    ['mysql -uroot -phunter2 db', 'hunter2'],
+    ['docker login -u me -p hunter2 reg.example.com', 'hunter2'],
+    ['DB_PASS=hunter2 ./run', 'hunter2'],
+    ['PASS=hunter2 ./run', 'hunter2'],
+    ['-----BEGIN RSA PRIVATE KEY-----\nMIIEow…\n-----END RSA PRIVATE KEY-----', 'MIIEow'],
+    ['-----BEGIN RSA PRIVATE KEY-----\nMIIEow…', 'MIIEow'],
+  ]
+  for (const [input, secret] of masked) expect(redact(input)).not.toContain(secret)
+  for (const s of [
+    'mkdir -p src/a',
+    'ls -la src/',
+    'grep -rn token src',
+    'ssh git@github.com',
+    'git clone https://github.com/org/repo',
+    'echo $PWD',
+    'docker exec c mkdir -p /x',
+    'docker run -p 8080:80 img',
+    'docker compose -p myproj up',
+    'docker run -u 1000:1000 img',
+    'mysql -p mydb',
+    'mysql -h db -u root',
+    'git push -u origin main',
+    'git log -p',
+    'echo $npm_package_version',
+    'npm-check-updates --target minor',
+    'BYPASS=1',
+    'COMPASS=1',
+    'https://host:8080/path@x',
+  ]) expect(redact(s)).toBe(s)
+})
+
+test('the added credential patterns stay linear on repeated starts', () => {
+  const n = 200_000
+  const starts: [string, number][] = [
+    ['mysql ', n / 6],
+    ['docker login ', n / 13],
+    ['curl ', n / 5],
+    ['&a', n / 2],
+    ['-----BEGIN ', n / 11],
+    ['-----BEGIN PRIVATE KEY-----', n / 27],
+    ['A_', n / 2],
+  ]
+  for (const [start, times] of starts) {
+    const t = performance.now()
+    redact(start.repeat(times))
+    expect(performance.now() - t).toBeLessThan(200)
+  }
+  for (const s of ['?' + 'a'.repeat(n), 'A'.repeat(n)]) {
+    const t = performance.now()
+    redact(s)
+    expect(performance.now() - t).toBeLessThan(200)
+  }
+})
+
 const check = (id: string, verdict: Check['verdict'], bucket: Check['bucket'] = 'shell'): Check => ({
   id,
   tool: 'Bash',

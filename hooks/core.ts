@@ -328,10 +328,21 @@ export const limitLabel = (kind: string) =>
 const SECRETS: [RegExp, string][] = [
   [/(authorization\s*[:=]\s*)(bearer\s+|basic\s+)?\S+/gi, '$1$2•••'],
   [/\b(bearer)\s+[A-Za-z0-9._~+/-]{8,}=*/gi, '$1 •••'],
-  [/\b(sk|pk|rk|ghp|gho|ghs|github_pat|xox[abprs])[-_][A-Za-z0-9_-]{8,}/g, '•••'],
+  [/\b(sk|pk|rk|ghp|gho|ghs|ghu|ghr|github_pat|glpat|xox[abprs])[-_][A-Za-z0-9_-]{8,}/g, '•••'],
   [/((?:api[_-]?key|access[_-]?token|token|secret|password|passwd|pwd)\s*[=:]\s*)("[^"]*"|'[^']*'|\S+)/gi, '$1•••'],
   [/(--(?:token|password|api-key|secret)[= ])\S+/gi, '$1•••'],
-  [/(\b[A-Z][A-Z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD)=)\S+/g, '$1•••'],
+  [/(\b(?:[A-Z][A-Z0-9_]*(?:KEY|TOKEN|SECRET|PASSWORD|PASSWD|CREDENTIALS)|(?:[A-Z][A-Z0-9_]*_)?PASS)=)\S+/g, '$1•••'],
+  [/\bnpm_[A-Za-z0-9]{36}\b/g, '•••'],
+  [/\b(?:AKIA|ASIA)[A-Z0-9]{16}\b/g, '•••'],
+  [/(\baws_(?:secret_access_key|session_token)\b["']?\s*[=:\s]\s*)\S+/gi, '$1•••'],
+  [/\bAIza[0-9A-Za-z_-]{30,}/g, '•••'],
+  [/([?&](?:[\w-]*sig(?:nature)?|key)=)[^&\s"']+/gi, '$1•••'],
+  [/\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]*/g, '•••'],
+  [/(\b(?:set-)?cookie\s*:\s*)[^"'\n]+/gi, '$1•••'],
+  [/(\bcurl\b[^\n;&|]{0,200}?\s(?:-u|--user)[= ]?\s*["']?[^\s:"']+:)[^\s"']+/g, '$1•••'],
+  [/(\b(?:mysql|mysqldump|mysqladmin|mariadb)\b[^\n;&|]{0,200}?\s-p)[^\s-]\S*/g, '$1•••'],
+  [/(\b(?:docker|podman)\s+login\b[^\n;&|]{0,200}?\s-p\s?)[^\s-]\S*/g, '$1•••'],
+  [/(-----BEGIN [A-Z ]*PRIVATE KEY-----)[\s\S]*?(?:-----END [A-Z ]*PRIVATE KEY-----|$)/g, '$1 •••'],
   [/((?<![\w+.-])[a-z][a-z0-9+.-]*:\/\/[^\s/:@]+:)[^\s@/]{1,256}@/gi, '$1•••@'],
 ]
 

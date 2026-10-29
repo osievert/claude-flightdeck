@@ -3,6 +3,7 @@
 ## Unreleased
 
 - A very long shell command no longer stalls the session while Flightdeck masks its credentials: only the start the pane can show is scanned.
+- The gate's drill-down and the session log mask more credential formats: AWS keys, GitLab and npm tokens, Google API keys, bare JWTs, cookies, `curl -u`, `mysql -p`/`docker login -p` passwords, `*_PASS=` variables, signed-URL query secrets and PEM private keys.
 
 ## 0.5.1
 
